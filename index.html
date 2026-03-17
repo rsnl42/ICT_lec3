@@ -175,21 +175,51 @@
                 }
             });
 
-            // Timeline Chart Data
-            const timelines = {};
+            // Timeline Chart Data - Refined to Top 5
+            const timelinesRaw = {};
             data.forEach(row => {
-                const timeline = row['Timeline'] === 'N/A' ? 'Unspecified' : row['Timeline'];
-                timelines[timeline] = (timelines[timeline] || 0) + 1;
+                const timeline = row['Timeline'] === 'N/A' || !row['Timeline'] ? 'Unspecified' : row['Timeline'];
+                timelinesRaw[timeline] = (timelinesRaw[timeline] || 0) + 1;
             });
+
+            const sortedTimelines = Object.entries(timelinesRaw)
+                .sort((a, b) => b[1] - a[1]);
+
+            const top5Timelines = sortedTimelines.slice(0, 4);
+            const otherCount = sortedTimelines.slice(4).reduce((sum, item) => sum + item[1], 0);
+            
+            if (otherCount > 0) {
+                top5Timelines.push(['Other', otherCount]);
+            }
+
+            const timelineLabels = top5Timelines.map(t => t[0]);
+            const timelineData = top5Timelines.map(t => t[1]);
 
             new Chart(document.getElementById('timelineChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(timelines),
+                    labels: timelineLabels,
                     datasets: [{
-                        data: Object.values(timelines),
-                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                        data: timelineData,
+                        backgroundColor: [
+                            '#0f172a', // Slate 900
+                            '#2563eb', // Blue 600
+                            '#10b981', // Emerald 500
+                            '#f59e0b', // Amber 500
+                            '#64748b'  // Slate 500 (Other)
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
                     }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, padding: 20 }
+                        }
+                    },
+                    cutout: '70%'
                 }
             });
         }
