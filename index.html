@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Government Commitments Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        h1 { font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+        p.subtitle { color: var(--secondary); margin-bottom: 2rem; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+        }
+        .card h2 { font-size: 1.25rem; margin-top: 0; margin-bottom: 1rem; color: var(--secondary); }
+        
+        .controls {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+        #search-input {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            width: 100%;
+            max-width: 400px;
+            font-size: 1rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: var(--card);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        th { background: #f1f5f9; font-weight: 600; position: sticky; top: 0; }
+        tr:hover { background: #f8fafc; }
+        
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>2026 Government Commitments Dashboard</h1>
+            <p class="subtitle">Visualizing specific promises from the State of the Nation Address</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h2>Commitments by Sector</h2>
+                <canvas id="sectorChart"></canvas>
+            </div>
+            <div class="card">
+                <h2>Timeline Analysis</h2>
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Detailed Commitments Data</h2>
+            <div class="controls">
+                <input type="text" id="search-input" placeholder="Search commitments, actors, or quotes...">
+            </div>
+            <div class="table-container">
+                <table id="commitments-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Organisation</th>
+                            <th>Amount</th>
+                            <th>Timeline</th>
+                            <th>Reasoning</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Data will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CSV_URL = 'commitments.csv';
+
+        async function init() {
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    const data = results.data;
+                    renderCharts(data);
+                    renderTable(data);
+                    setupSearch(data);
+                }
+            });
+        }
+
+        function renderCharts(data) {
+            // Sector Chart Data
+            const sectors = {};
+            data.forEach(row => {
+                const sector = row['Organisation/Actor'] || 'Other';
+                sectors[sector] = (sectors[sector] || 0) + 1;
+            });
+
+            new Chart(document.getElementById('sectorChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(sectors),
+                    datasets: [{
+                        label: 'Number of Commitments',
+                        data: Object.values(sectors),
+                        backgroundColor: '#2563eb'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Timeline Chart Data
+            const timelines = {};
+            data.forEach(row => {
+                const timeline = row['Timeline'] === 'N/A' ? 'Unspecified' : row['Timeline'];
+                timelines[timeline] = (timelines[timeline] || 0) + 1;
+            });
+
+            new Chart(document.getElementById('timelineChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(timelines),
+                    datasets: [{
+                        data: Object.values(timelines),
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                    }]
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const body = document.getElementById('table-body');
+            body.innerHTML = data.map(row => `
+                <tr>
+                    <td><strong>${row['Commitment Description']}</strong></td>
+                    <td><span class="tag">${row['Organisation/Actor']}</span></td>
+                    <td>${row['Amount']}</td>
+                    <td>${row['Timeline']}</td>
+                    <td>${row['Reasoning']}</td>
+                </tr>
+            `).join('');
+        }
+
+        function setupSearch(data) {
+            const input = document.getElementById('search-input');
+            input.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = data.filter(row => 
+                    Object.values(row).some(val => val.toLowerCase().includes(term))
+                );
+                renderTable(filtered);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
