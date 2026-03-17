@@ -35,8 +35,8 @@
         p.subtitle { color: var(--secondary); margin-bottom: 2rem; }
         
         .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -46,6 +46,8 @@
             border-radius: 0.75rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid var(--border);
+            width: 100%;
+            box-sizing: border-box;
         }
         .card h2 { font-size: 1.25rem; margin-top: 0; margin-bottom: 1rem; color: var(--secondary); }
         
@@ -156,7 +158,9 @@
             const sectorMapping = {
                 'SAPS': 'Justice & Safety',
                 'South African National Defence Force (SANDF)': 'Justice & Safety',
-                'National Government': 'Infrastructure & Energy',
+                'National Government': 'Government',
+                'Metros': 'Government',
+                'National Water Resource Infrastructure Agency': 'Infrastructure & Energy',
                 'Eskom': 'Infrastructure & Energy',
                 'Presidential Employment Stimulus': 'Economy & Employment',
                 'SMEs': 'Economy & Employment',
