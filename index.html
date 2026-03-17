@@ -92,6 +92,11 @@
             background: #dbeafe;
             color: #1e40af;
         }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -104,11 +109,15 @@
         <div class="dashboard-grid">
             <div class="card">
                 <h2>Commitments by Sector</h2>
-                <canvas id="sectorChart"></canvas>
+                <div class="chart-container">
+                    <canvas id="sectorChart"></canvas>
+                </div>
             </div>
             <div class="card">
                 <h2>Timeline Analysis</h2>
-                <canvas id="timelineChart"></canvas>
+                <div class="chart-container">
+                    <canvas id="timelineChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -213,7 +222,7 @@
                 options: {
                     indexAxis: 'y',
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
                     plugins: { 
                         legend: { display: false },
                         tooltip: { enabled: true }
