@@ -152,26 +152,78 @@
         }
 
         function renderCharts(data) {
-            // Sector Chart Data
-            const sectors = {};
+            // Sector Mapping - Consolidating Overlapping Categories
+            const sectorMapping = {
+                'SAPS': 'Justice & Safety',
+                'South African National Defence Force (SANDF)': 'Justice & Safety',
+                'National Government': 'Infrastructure & Energy',
+                'Eskom': 'Infrastructure & Energy',
+                'Presidential Employment Stimulus': 'Economy & Employment',
+                'SMEs': 'Economy & Employment',
+                'National Skills Fund': 'Economy & Employment',
+                'Department of Basic Education': 'Social Welfare & Health',
+                'SASSA': 'Social Welfare & Health',
+                'National Health Insurance (NHI)': 'Social Welfare & Health'
+            };
+
+            const sectorsRaw = {};
             data.forEach(row => {
-                const sector = row['Organisation/Actor'] || 'Other';
-                sectors[sector] = (sectors[sector] || 0) + 1;
+                let sector = row['Organisation/Actor'] || 'Other';
+                // Apply mapping if it exists, otherwise keep original
+                sector = sectorMapping[sector] || sector;
+                sectorsRaw[sector] = (sectorsRaw[sector] || 0) + 1;
             });
+
+            // Sorting and Limiting to Top 5
+            const sortedSectors = Object.entries(sectorsRaw)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const sectorLabels = sortedSectors.map(s => s[0]);
+            const sectorData = sortedSectors.map(s => s[1]);
 
             new Chart(document.getElementById('sectorChart'), {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(sectors),
+                    labels: sectorLabels,
                     datasets: [{
                         label: 'Number of Commitments',
-                        data: Object.values(sectors),
-                        backgroundColor: '#2563eb'
+                        data: sectorData,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 4
                     }]
                 },
+                plugins: [{
+                    id: 'top-label',
+                    afterDraw: (chart) => {
+                        const { ctx, scales: { x, y } } = chart;
+                        ctx.fillStyle = '#0f172a';
+                        ctx.font = 'bold 12px Inter';
+                        ctx.textAlign = 'left';
+                        
+                        // Add label to the first (top) bar
+                        const bar = chart.getDatasetMeta(0).data[0];
+                        ctx.fillText(`${sectorData[0]} Commitments (Leading Sector)`, bar.x + 10, bar.y + 5);
+                    }
+                }],
                 options: {
                     indexAxis: 'y',
-                    plugins: { legend: { display: false } }
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, grid: { display: false } },
+                        y: {
+                            ticks: { 
+                                autoSkip: false, 
+                                font: { weight: '600' }
+                            },
+                            grid: { display: false }
+                        }
+                    }
                 }
             });
 
