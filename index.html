@@ -190,9 +190,19 @@
             const sectorsRaw = {};
             data.forEach(row => {
                 let sector = row['Organisation/Actor'] || 'Other';
-                // Apply mapping if it exists, otherwise keep original
-                sector = sectorMapping[sector] || sector;
-                sectorsRaw[sector] = (sectorsRaw[sector] || 0) + 1;
+                
+                // Robust mapping: Check mapping first, then prefix
+                let finalSector = sectorMapping[sector];
+                
+                if (!finalSector) {
+                    if (sector.startsWith('Government /') || sector.includes('/ Government')) {
+                        finalSector = 'Government';
+                    } else {
+                        finalSector = sector;
+                    }
+                }
+                
+                sectorsRaw[finalSector] = (sectorsRaw[finalSector] || 0) + 1;
             });
 
             // Sorting and Limiting to Top 5
